@@ -558,6 +558,66 @@
   .bd-result { margin-top: 3px; font-size: 13px; color: var(--ink); }
   .bd-result strong { color: var(--accent-b); font-size: 14px; font-weight: 700; }
 
+  /* Cashflow explanation */
+  .cashflow-explain {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+  }
+  .cf-phase-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 16px;
+    margin-top: 12px;
+  }
+  .cf-phase-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    height: fit-content;
+    margin-top: 3px;
+  }
+  .cf-phase-1 { background: var(--accent-a); color: var(--paper); }
+  .cf-phase-2 { background: var(--gold); color: var(--paper); }
+  .cf-phase-3 { background: var(--accent-b); color: var(--paper); }
+  .cf-phase-body {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .cf-phase-body:last-of-type { border-bottom: none; }
+  .cf-phase-title { font-weight: 500; color: var(--ink); font-size: 13px; margin-bottom: 4px; }
+  .cf-phase-calc { font-size: 12px; color: var(--ink-soft); line-height: 1.9; }
+  .cf-phase-calc code {
+    background: var(--bg);
+    padding: 1px 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    border-radius: 2px;
+    direction: ltr;
+    display: inline-block;
+  }
+  .cf-note {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border-right: 2px solid var(--line);
+    border-radius: 0 2px 2px 0;
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.7;
+  }
+
   /* Footer note */
   .disclaimer {
     margin-top: 32px;
@@ -627,6 +687,9 @@
   <div class="chart-title">תזרים שנתי לחבר — לאורך תקופת ההסדר</div>
   <canvas id="chart"></canvas>
 </div>
+
+<!-- Cashflow explanation -->
+<div class="cashflow-explain" id="cashflow-explain"></div>
 
 <div class="disclaimer">
   <strong>הערה חשובה:</strong> זהו כלי הערכה לצורך הבנת מנגנון התקנון. הוא מפשט את ניכויי סעיף 3 לתקנון (השלמת ערבות הדדית, קרן תשתיות, קרן דיור, פער קהילה) לפרמטר אחד של "רווח שנתי לחלוקה". התוצאות תלויות בערכים שמוזנים ואינן מהוות התחייבות כספית. המקור המחייב הוא תקנון הקיבוץ.
@@ -1041,6 +1104,7 @@ function renderResults() {
   const resB = mode === 'compare' ? compute(state.B) : null;
   renderBreakdown(resA, resB);
   renderChart(resA, resB);
+  renderCashflowExplanation(resA, resB);
 }
 
 function renderBreakdown(resA, resB) {
@@ -1152,6 +1216,149 @@ function renderBreakdown(resA, resB) {
 
   t.innerHTML = `<details class="bd-details"${wasOpen ? ' open' : ''}>
     <summary class="bd-summary"><span class="bd-chevron">&#9654;</span> פירוט החישוב</summary>
+    <div class="bd-details-body">${inner}</div>
+  </details>`;
+}
+
+function renderCashflowExplanation(resA, resB) {
+  const el = $('cashflow-explain');
+  if (!el) return;
+
+  const fmtNum = n => Math.round(n).toLocaleString('he-IL') + ' ₪';
+
+  const buildExplanation = (r, s, label) => {
+    const annualProfit = parseFloat(s.profit) * 1e6;
+    const deficit = parseFloat(s.deficit) * 1e6;
+    const distributable = Math.max(0, annualProfit - deficit);
+    const t1 = parseFloat(s.t1) / 100;
+    const t2 = parseFloat(s.t2) / 100;
+    const sh2 = parseFloat(s.s2) / 100;
+    const sh3 = parseFloat(s.s3) / 100;
+    const horizon = parseFloat(s.horizon);
+    const totalVeteranClaim = Math.max(r.netAssets, 1);
+    const memberFraction = r.adjustedRight / totalVeteranClaim;
+
+    // Determine phase durations from yearlyData
+    const p1end = r.phase1EndYear;
+    const p2end = r.phase2EndYear;
+    const lastYear = r.yearlyData.filter(d => d.receipt > 0).length || horizon;
+
+    // Representative receipts per phase
+    const receiptsP1 = r.yearlyData.filter((d, i) => i < (p1end || lastYear));
+    const receiptsP2 = p1end != null
+      ? r.yearlyData.filter((d, i) => i >= p1end && i < (p2end || lastYear))
+      : [];
+    const receiptsP3 = p2end != null
+      ? r.yearlyData.filter((d, i) => i >= p2end && d.receipt > 0)
+      : [];
+
+    const avgReceipt = arr => arr.length ? arr.reduce((s, d) => s + d.receipt, 0) / arr.length : 0;
+
+    // Build phase formula descriptions
+    const toVetsP1 = distributable * 1.0;
+    const memberReceiptP1 = toVetsP1 * memberFraction;
+    const toVetsP2 = distributable * sh2;
+    const toEqP2 = distributable * (1 - sh2);
+    const memberReceiptP2_vet = toVetsP2 * memberFraction;
+    const membersAtMidP2 = r.vets + parseFloat(s.newm) * (p1end || 0);
+    const memberReceiptP2_eq = membersAtMidP2 > 0 ? toEqP2 / membersAtMidP2 : 0;
+    const toVetsP3 = distributable * sh3;
+    const toEqP3 = distributable * (1 - sh3);
+    const memberReceiptP3_vet = toVetsP3 * memberFraction;
+    const membersAtMidP3 = r.vets + parseFloat(s.newm) * (p2end || 0);
+    const memberReceiptP3_eq = membersAtMidP3 > 0 ? toEqP3 / membersAtMidP3 : 0;
+
+    const fmtYears = (a, b) => b != null ? `שנים ${a}–${b}` : `שנה ${a} ואילך`;
+
+    // Detect within-phase trend for equal share
+    const newPerYear = parseFloat(s.newm);
+    const equalShareGrows = newPerYear > 0;
+
+    let phases = `<div class="cf-phase-grid">`;
+
+    // Phase 1
+    const p1Years = p1end ? `שנים 1–${p1end}` : `שנים 1–${lastYear} (כל ההסדר)`;
+    phases += `
+      <div class="cf-phase-tag cf-phase-1">שלב א׳</div>
+      <div class="cf-phase-body">
+        <div class="cf-phase-title">${p1Years} — 100% לוותיקים</div>
+        <div class="cf-phase-calc">
+          <div>הניתן לחלוקה: <code>${fmtNum(annualProfit)} − ${fmtNum(deficit)} = ${fmtNum(distributable)}</code></div>
+          <div>חלקך: <code>${fmtNum(distributable)} × 100% × ${(memberFraction * 100).toFixed(2)}% = ${fmtNum(memberReceiptP1)}</code></div>
+          <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtNum(avgReceipt(receiptsP1))}</strong>${p1end ? ` (שלב זה מסתיים כשנפרע ${Math.round(t1*100)}% מהזכאות)` : ''}</div>
+        </div>
+      </div>`;
+
+    // Phase 2
+    if (p1end != null) {
+      const p2Years = p2end != null ? `שנים ${p1end+1}–${p2end}` : `שנים ${p1end+1}–${lastYear}`;
+      phases += `
+        <div class="cf-phase-tag cf-phase-2">שלב ב׳</div>
+        <div class="cf-phase-body">
+          <div class="cf-phase-title">${p2Years} — ${Math.round(sh2*100)}% לוותיקים, ${Math.round((1-sh2)*100)}% לכלל</div>
+          <div class="cf-phase-calc">
+            <div>חלק ותיקים: <code>${fmtNum(distributable)} × ${Math.round(sh2*100)}% × ${(memberFraction*100).toFixed(2)}% = ${fmtNum(memberReceiptP2_vet)}</code></div>
+            <div>חלק שוויוני: <code>${fmtNum(distributable)} × ${Math.round((1-sh2)*100)}% ÷ ~${Math.round(membersAtMidP2)} חברים = ${fmtNum(memberReceiptP2_eq)}</code></div>
+            <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtNum(avgReceipt(receiptsP2))}</strong>${equalShareGrows ? ` — החלק השוויוני <em>קטן</em> עם הצטרפות חברים חדשים` : ''}${p2end ? ` (שלב זה מסתיים כשנפרע ${Math.round(t2*100)}%)` : ''}</div>
+          </div>
+        </div>`;
+    }
+
+    // Phase 3
+    if (p2end != null) {
+      const p3Years = `שנים ${p2end+1}–${lastYear}`;
+      phases += `
+        <div class="cf-phase-tag cf-phase-3">שלב ג׳</div>
+        <div class="cf-phase-body">
+          <div class="cf-phase-title">${p3Years} — ${Math.round(sh3*100)}% לוותיקים, ${Math.round((1-sh3)*100)}% לכלל</div>
+          <div class="cf-phase-calc">
+            <div>חלק ותיקים: <code>${fmtNum(distributable)} × ${Math.round(sh3*100)}% × ${(memberFraction*100).toFixed(2)}% = ${fmtNum(memberReceiptP3_vet)}</code></div>
+            <div>חלק שוויוני: <code>${fmtNum(distributable)} × ${Math.round((1-sh3)*100)}% ÷ ~${Math.round(membersAtMidP3)} חברים = ${fmtNum(memberReceiptP3_eq)}</code></div>
+            <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtNum(avgReceipt(receiptsP3))}</strong>${equalShareGrows ? ` — החלק השוויוני ממשיך לקטון` : ''}</div>
+          </div>
+        </div>`;
+    }
+
+    phases += `</div>`;
+
+    // Trend note
+    let trendNote = '';
+    const p1avg = avgReceipt(receiptsP1);
+    const p2avg = avgReceipt(receiptsP2);
+    const p3avg = avgReceipt(receiptsP3);
+
+    const drops = [];
+    if (p1end && p2avg < p1avg * 0.95)
+      drops.push(`ירידה חדה בין שלב א׳ לב׳ (מ-${fmtNum(p1avg)} ל-${fmtNum(p2avg)}) — שיעור הוותיקים יורד מ-100% ל-${Math.round(sh2*100)}%`);
+    if (p2end && p3avg < p2avg * 0.95)
+      drops.push(`ירידה נוספת בין שלב ב׳ לג׳ (ל-${fmtNum(p3avg)}) — שיעור הוותיקים יורד שוב ל-${Math.round(sh3*100)}%`);
+    if (equalShareGrows && (receiptsP2.length > 0 || receiptsP3.length > 0))
+      drops.push(`בתוך שלבים ב׳ וג׳, התקבול השוויוני יורד בהדרגה ככל שמצטרפים חברים חדשים (${parseFloat(s.newm)} לשנה)`);
+
+    if (drops.length) {
+      trendNote = `<div class="cf-note"><strong>מדוע הגרף יורד?</strong><br>${drops.join('<br>')}</div>`;
+    } else if (p1avg > 0 && !p1end) {
+      trendNote = `<div class="cf-note">כל הרווח מגיע לוותיקים לאורך כל תקופת ההסדר — הזכאות הכוללת נמוכה ביחס לרווח השנתי.</div>`;
+    }
+
+    const labelHtml = label ? `<div style="margin-bottom:8px;"><span class="${label === 'A' ? 'label-a' : 'label-b'}">${label === 'A' ? 'תרחיש א׳' : 'תרחיש ב׳'}</span></div>` : '';
+    return labelHtml + phases + trendNote;
+  };
+
+  const wasOpen = el.querySelector('details')?.open || false;
+
+  let inner;
+  if (mode === 'single') {
+    inner = buildExplanation(resA, state.A, null);
+  } else {
+    inner =
+      buildExplanation(resA, state.A, 'A') +
+      `<hr style="border:none;border-top:1px dashed var(--line);margin:14px 0;">` +
+      buildExplanation(resB, state.B, 'B');
+  }
+
+  el.innerHTML = `<details class="bd-details"${wasOpen ? ' open' : ''}>
+    <summary class="bd-summary"><span class="bd-chevron">&#9654;</span> הסבר — כיצד מחושב התזרים השנתי</summary>
     <div class="bd-details-body">${inner}</div>
   </details>`;
 }
