@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סימולטור התקנון הרדום — קבוצת יבנה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f1ea;
+    --paper: #fdfbf6;
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --ink-muted: #7a7a73;
+    --line: #d9d3c4;
+    --line-soft: #e8e3d4;
+    --accent-a: #5b6b4f;
+    --accent-a-soft: #e3e7dd;
+    --accent-b: #8b3a2e;
+    --accent-b-soft: #f0dcd6;
+    --gold: #a8843a;
+    --shadow: 0 1px 0 rgba(0,0,0,0.04);
+  }
+
+  html, body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    font-size: 15px;
+    min-height: 100vh;
+  }
+
+  body {
+    background-image:
+      radial-gradient(ellipse at top right, rgba(168, 132, 58, 0.04), transparent 60%),
+      radial-gradient(ellipse at bottom left, rgba(91, 107, 79, 0.05), transparent 60%);
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* Beta banner */
+  .beta-banner {
+    background: #fff8e6;
+    border: 1.5px solid var(--gold);
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-bottom: 28px;
+    font-size: 13.5px;
+    color: #6b4f10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .beta-badge {
+    background: var(--gold);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+    position: relative;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    right: 0;
+    width: 80px;
+    height: 2px;
+    background: var(--gold);
+  }
+  h1 {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 16px;
+    color: var(--ink-soft);
+    font-weight: 300;
+  }
+  .meta {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+  .meta strong { color: var(--accent-b); font-weight: 500; }
+
+  /* Intro */
+  .intro {
+    margin-bottom: 28px;
+    padding: 18px 22px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-right: 3px solid var(--gold);
+    border-radius: 0 4px 4px 0;
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+  }
+
+  /* Couple / person tabs */
+  .couple-toggle {
+    font-family: 'Heebo', sans-serif;
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    margin-right: auto;
+  }
+  .couple-toggle.active {
+    background: var(--accent-a-soft);
+    border-color: var(--accent-a);
+    color: var(--accent-a);
+    font-weight: 500;
+  }
+  .person-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .person-tab {
+    font-family: 'Heebo', sans-serif;
+    font-size: 12px;
+    padding: 4px 14px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  .person-tab:hover { background: var(--accent-a-soft); }
+  .person-tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .person-section { display: none; }
+  .person-section.active { display: block; }
+  .person-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--ink-muted);
+    padding: 8px 0 4px;
+    border-bottom: 1px dashed var(--line-soft);
+    margin-bottom: 4px;
+  }
+
+  /* Mode toggle */
+  .mode-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .mode-btn {
+    font-family: 'Heebo', sans-serif;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  .mode-btn:hover { background: var(--accent-a-soft); }
+  .mode-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .mode-label {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-left: auto;
+  }
+
+  /* Results section */
+  .results-strip {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .results-strip.compare-mode {
+    display: grid;
+    grid-template-columns: 1fr 1fr 220px;
+    gap: 0;
+  }
+  .scenario-block {
+    padding: 20px 24px;
+    border-left: 1px solid var(--line);
+  }
+  .scenario-block:last-child { border-left: none; }
+  .scenario-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+  }
+  .tag-a { background: var(--accent-a); color: var(--paper); }
+  .tag-b { background: var(--accent-b); color: var(--paper); }
+  .tag-delta { background: var(--gold); color: var(--paper); }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 16px;
+  }
+  .result-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .result-label {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+  }
+  .result-value {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+  .result-value.highlight { color: var(--accent-b); }
+  .result-sub {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+  .delta-value.positive { color: var(--accent-a); }
+  .delta-value.negative { color: var(--accent-b); }
+
+  /* Chart */
+  .chart-container {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 24px;
+    height: 280px;
+    position: relative;
+  }
+  .chart-title {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: var(--ink-soft);
+  }
+
+  /* Panels */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .panels.compare-mode {
+    grid-template-columns: 1fr 1fr;
+  }
+  .panels.compare-mode .panel-rules {
+    grid-column: 1 / -1;
+  }
+
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+  }
+  .panel-num {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .panel-title {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .panel-subtitle {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-right: auto;
+  }
+  .panel-body { padding: 14px 18px; }
+  .panel-body.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+  }
+  .panel-body.compare-grid .field-group {
+    padding: 6px 0;
+  }
+  .compare-header {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .compare-header span {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Fields */
+  .field-group {
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .field-group:last-child { border-bottom: none; }
+  .field-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .field-label {
+    font-size: 13px;
+    color: var(--ink-soft);
+    flex: 1;
+  }
+  .info-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-muted);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 11px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .info-btn:hover {
+    background: var(--gold);
+    color: var(--paper);
+    border-color: var(--gold);
+  }
+  .field-value {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent-b);
+    min-width: 60px;
+    text-align: left;
+  }
+  .field-tooltip {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    background: var(--bg);
+    padding: 8px 10px;
+    border-right: 2px solid var(--gold);
+    margin-top: 6px;
+    display: none;
+    border-radius: 0 2px 2px 0;
+  }
+  .field-tooltip.open { display: block; }
+  .field-tooltip strong { color: var(--ink); font-weight: 500; }
+  .field-tooltip code {
+    background: var(--paper);
+    padding: 1px 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    border-radius: 2px;
+    direction: ltr;
+    display: inline-block;
+  }
+  .field-tooltip .source {
+    display: block;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--line);
+    font-size: 11px;
+    color: var(--accent-a);
+    font-weight: 500;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    outline: none;
+    direction: ltr;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+  }
+  select {
+    font-family: 'Heebo', sans-serif;
+    font-size: 13px;
+    padding: 4px 8px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    border-radius: 2px;
+    color: var(--ink);
+    direction: rtl;
+  }
+
+  /* Breakdown */
+  .breakdown {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+  }
+  .breakdown strong { color: var(--ink); font-weight: 500; }
+  .breakdown .label-a, .breakdown .label-b {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 4px;
+  }
+  .breakdown .label-a { background: var(--accent-a-soft); color: var(--accent-a); }
+  .breakdown .label-b { background: var(--accent-b-soft); color: var(--accent-b); }
+
+  /* Breakdown toggle */
+  .bd-details { outline: none; }
+  .bd-summary {
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-weight: 500;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    padding: 2px 0;
+  }
+  .bd-summary::-webkit-details-marker { display: none; }
+  .bd-summary::marker { display: none; }
+  .bd-chevron {
+    font-size: 9px;
+    color: var(--gold);
+    display: inline-block;
+    transition: transform 0.15s;
+  }
+  details[open] .bd-chevron { transform: rotate(90deg); }
+  .bd-details-body { margin-top: 12px; }
+
+  /* Breakdown sections */
+  .bd-grid { display: flex; flex-direction: column; }
+  .bd-section {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .bd-section:last-child { border-bottom: none; padding-bottom: 0; }
+  .bd-step {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--paper);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Frank Ruhl Libre', serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .bd-content { flex: 1; min-width: 0; }
+  .bd-title { font-weight: 500; color: var(--ink); font-size: 13px; margin-bottom: 4px; }
+  .bd-calc { font-size: 12px; color: var(--ink-soft); line-height: 1.9; }
+  .bd-calc code {
+    background: var(--bg);
+    padding: 1px 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    border-radius: 2px;
+    direction: ltr;
+    display: inline-block;
+  }
+  .bd-result { margin-top: 3px; font-size: 13px; color: var(--ink); }
+  .bd-result strong { color: var(--accent-b); font-size: 14px; font-weight: 700; }
+
+  /* Footer note */
+  .disclaimer {
+    margin-top: 32px;
+    padding: 16px 20px;
+    background: var(--accent-a-soft);
+    border-right: 3px solid var(--accent-a);
+    border-radius: 0 4px 4px 0;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+  .disclaimer strong { color: var(--accent-a); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .panels, .panels.compare-mode { grid-template-columns: 1fr; }
+    .results-strip.compare-mode { grid-template-columns: 1fr; }
+    .scenario-block { border-left: none; border-bottom: 1px solid var(--line); }
+    h1 { font-size: 28px; }
+    .panel-body.compare-grid { grid-template-columns: 1fr; }
+    .compare-header { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="beta-banner">
+  <span class="beta-badge">גרסת בטא</span>
+  <span>כלי זה הוא <strong>ניסיוני</strong> — הנתונים, הנוסחאות והחישובים עשויים להכיל שגיאות. אין להסתמך עליו לצורכי קבלת החלטות מחייבות.</span>
+</div>
+
+<header>
+  <h1>סימולטור התקנון הרדום</h1>
+  <div class="subtitle">חישוב זכאות אישית על פי הצעת התקנון — קבוצת יבנה</div>
+  <div class="meta">בהתבסס על נוסח התקנון לאחר מועצה <strong>18.3.26</strong> · ערכים ראשוניים הם הערכה בלבד</div>
+</header>
+
+<div class="intro">
+  <p>כלי זה נועד לצורך הבנת מנגנון התקנון הרדום והשלכותיו. הזן את הנתונים האישיים שלך ואת הנחות היסוד לגבי מצב הקיבוץ — הסימולטור יחשב את הזכאות הצפויה שלך ואת תזרים התשלומים לאורך שנות ההסדר.</p>
+</div>
+
+<div class="mode-bar">
+  <button class="mode-btn active" data-mode="single">תרחיש יחיד</button>
+  <button class="mode-btn" data-mode="compare">השוואת תרחישים</button>
+  <span class="mode-label">לחץ על <strong style="color:var(--gold)">?</strong> ליד כל שדה לפירוט הנוסחה והמקור בתקנון</span>
+</div>
+
+<!-- Three panels -->
+<div class="panels" id="panels">
+  <!-- populated by JS based on mode -->
+</div>
+
+<div style="height: 24px;"></div>
+
+<!-- Results -->
+<div class="results-strip" id="results-strip">
+  <!-- populated by JS -->
+</div>
+
+<!-- Breakdown -->
+<div class="breakdown" id="breakdown-text">—</div>
+
+<!-- Chart -->
+<div class="chart-container">
+  <div class="chart-title">תזרים שנתי לחבר — לאורך תקופת ההסדר</div>
+  <canvas id="chart"></canvas>
+</div>
+
+<div class="disclaimer">
+  <strong>הערה חשובה:</strong> זהו כלי הערכה לצורך הבנת מנגנון התקנון. הוא מפשט את ניכויי סעיף 3 לתקנון (השלמת ערבות הדדית, קרן תשתיות, קרן דיור, פער קהילה) לפרמטר אחד של "רווח שנתי לחלוקה". התוצאות תלויות בערכים שמוזנים ואינן מהוות התחייבות כספית. המקור המחייב הוא תקנון הקיבוץ.
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+// ===== Field definitions with tooltips =====
+const FIELDS = {
+  // Panel 1: Personal
+  sen:    { label: 'שנות ותק', type: 'range', min: 0, max: 60, step: 1, def: 35, panel: 1, person: 1,
+            tip: 'שנות הוותק שצברת מתחילת המועמדות. מוגבל בתקנון לעד <strong>40 שנה</strong> (סעיף 1.4 — הגדרת "שנות הוותק"). מחושב לפי <strong>נספח 1 — תקנון ותק</strong>: צבירה מגיל 22, עד גיל 70 או עד המועד הקובע.',
+            source: 'סעיף 1.4 + נספח 1' },
+  orph:   { label: 'הורים שנפטרו (חברי קיבוץ)', type: 'select', options: [['0','0'],['1','1'],['2','2']], def: '0', panel: 1, person: 1,
+            tip: 'מספר הורים שהיו חברי הקיבוץ ונפטרו לפני מועד קביעת הזכאים. כל הורה מזכה ב-<strong>10 שנות ותק נוספות</strong> (לכל היותר 20 שנה).',
+            source: 'סעיף 3.9.1' },
+  sib:    { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 1, max: 6, step: 1, def: 1, panel: 1, person: 1,
+            tip: 'אם יש לך אחים שגם הם חברים ותיקים או זכאים, תוספת הוותק בגין כל הורה <strong>מחולקת בחלקים שווים</strong> ביניכם.',
+            source: 'סעיף 3.9.1' },
+  wid:    { label: 'בן/בת זוג שנפטר/ה (חבר/ה)', type: 'select', options: [['no','לא'],['yes','כן']], def: 'no', panel: 1, person: 1,
+            tip: 'אם בן/בת הזוג היו חברי קיבוץ במועד פטירתם — תוספת של <strong>10 שנות ותק</strong>. אם יש ילדים חברים: 5 שנים לאלמן/ה ו-5 שנים מחולקות לילדים.',
+            source: 'סעיף 3.9.2' },
+  kids:   { label: 'ילדים חברים/זכאים', type: 'range', min: 0, max: 6, step: 1, def: 0, panel: 1, person: 1,
+            tip: 'משפיע על חלוקת תוספת הוותק של בן/בת הזוג שנפטר/ה. אם יש ילדים חברים, התוספת מתחלקת חצי-חצי בין האלמן/ה לילדים.',
+            source: 'סעיף 3.9.2' },
+  sen2:   { label: 'שנות ותק', type: 'range', min: 0, max: 60, step: 1, def: 30, panel: 1, person: 2,
+            tip: 'שנות הוותק של בן/בת הזוג מתחילת המועמדות. מוגבל ל-<strong>40 שנה</strong> (סעיף 1.4).',
+            source: 'סעיף 1.4 + נספח 1' },
+  orph2:  { label: 'הורים שנפטרו (חברי קיבוץ)', type: 'select', options: [['0','0'],['1','1'],['2','2']], def: '0', panel: 1, person: 2,
+            tip: 'הורים של בן/בת הזוג שהיו חברי קיבוץ ונפטרו — כל הורה מזכה ב-<strong>10 שנות ותק נוספות</strong>.',
+            source: 'סעיף 3.9.1' },
+  sib2:   { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 1, max: 6, step: 1, def: 1, panel: 1, person: 2,
+            tip: 'מספר האחים החברים של בן/בת הזוג שחולקים את תוספת הוותק.',
+            source: 'סעיף 3.9.1' },
+  home:   { label: 'ערך הדירה הנוכחית (מיליון ₪)', type: 'range', min: 0, max: 3, step: 0.1, def: 2, panel: 1, fmt: 'M',
+            tip: 'שווי <strong>"הבלוקים"</strong> של הדירה לפי שמאות שתיערך ביום הקובע — ערך בנייה בפועל בניכוי פחת (סעיף 5.2.1).',
+            source: 'סעיף 5.2.1' },
+  std:    { label: 'ערך דירת סטנדרט (מיליון ₪)', type: 'range', min: 0, max: 3, step: 0.1, def: 2, panel: 1, fmt: 'M',
+            tip: 'דירת הסטנדרט שהקיבוץ מחויב אליה לבית אב שהשלים <strong>50 שנות ותק</strong> ביום הקובע. ערך הזכות לשנת ותק = ערך הסטנדרט ÷ 50.',
+            source: 'סעיף 5.2.2' },
+  debt:   { label: 'חוב אישי לקיבוץ (אלפי ₪)', type: 'range', min: 0, max: 500, step: 10, def: 0, panel: 1, fmt: 'K',
+            tip: 'התחייבויות שלך לקיבוץ — חובות, נכסים שצברת ולא העברת, תשלומי נקלט שלא שולמו וכו\'. <strong>מנוכים</strong> מהזכאות.',
+            source: 'סעיף 4.5.2' },
+  cred:   { label: 'זכאויות אישיות (אלפי ₪)', type: 'range', min: 0, max: 500, step: 10, def: 0, panel: 1, fmt: 'K',
+            tip: 'יתרות תקציבים לא נוצלו, קרן חיים, וכספים אישיים אחרים. <strong>מוסיפים</strong> לזכאות.',
+            source: 'סעיף 4.5.1' },
+
+  // Panel 2: Reality
+  assets: { label: 'נכסי הקיבוץ נטו (מיליון ₪)', type: 'range', min: 300, max: 2000, step: 50, def: 750, panel: 2, fmt: 'M',
+            tip: 'הערכת השווי של נכסי הקיבוץ <strong>בניכוי</strong> ההתחייבויות והפחתות עתידיות (סעיפים 3.1–3.7): קרנות ערבות הדדית, השקעות תשתית, פער קהילה, דיור נקלטים וכו\'.',
+            source: 'סעיף 3' },
+  vets:   { label: 'מספר חברים ותיקים', type: 'range', min: 100, max: 400, step: 5, def: 340, panel: 2,
+            tip: 'סך החברים שיוכרו כ"ותיקים" במועד הקובע — מי שנרשם בספר החברים עד אז (סעיף 1.4 — הגדרת "חבר ותיק").',
+            source: 'סעיף 1.4' },
+  pool:   { label: 'סך שנות הוותק בקיבוץ', type: 'range', min: 6000, max: 16000, step: 500, def: 11000, panel: 2,
+            tip: 'סכום שנות הוותק של כל החברים הוותיקים והזכאים יחד. משמש כמכנה לחלוקת 80% מהזכויות.',
+            source: 'סעיף 3.10.1' },
+  profit: { label: 'רווח שנתי לחלוקה (מיליון ₪)', type: 'range', min: 10, max: 100, step: 5, def: 50, panel: 2, fmt: 'M',
+            tip: 'הרווח השנתי הצפוי <strong>לאחר</strong> ניכויי מדרג השימושים (השלמות ערבות, תשתיות, דיור, פער קהילה). זהו הסכום שזמין לפירעון זכויות.',
+            source: 'סעיף 4.1–4.3' },
+  deficit:{ label: 'פער קהילה שנתי (מיליון ₪)', type: 'range', min: 0, max: 30, step: 1, def: 10, panel: 2, fmt: 'M',
+            tip: 'הפער בין הוצאות הקהילה למקורותיה — <strong>עד 25%</strong> מהוצאות הקהילה ב-10 השנים הראשונות, ואז 15%, ולבסוף 5% (סעיף 4.3.4).',
+            source: 'סעיף 4.3.4' },
+  newm:   { label: 'נקלטים חדשים לשנה', type: 'range', min: 0, max: 20, step: 1, def: 10, panel: 2,
+            tip: 'מספר חברים חדשים שיתקבלו לחברות בכל שנה. <strong>משפיע</strong> על חלוקה השוויונית בשלבי הביניים של ההסדר (מ-25% ועד 75%).',
+            source: 'סעיף 4.4' },
+  growth: { label: 'צמיחת נכסים (% לשנה)', type: 'range', min: 0, max: 8, step: 0.1, def: 1, panel: 2, fmt: '%',
+            tip: 'קצב צמיחה שנתי צפוי של הנכסים והרווחים. עדכון שווי כל 5 שנים — רק עליות מעל <strong>30%</strong> מעדכנות את הזכויות (סעיף 3.8).',
+            source: 'סעיף 3.8' },
+  delay:    { label: 'פער אישור–הפעלה (שנים)', type: 'range', min: 0, max: 20, step: 1, def: 5, panel: 2,
+            tip: '<strong>מועד קביעת הזכאים</strong> (אישור האסיפה) מול <strong>המועד הקובע</strong> (הפעלת התקנון). בתקופת ההמתנה קורות שלוש תופעות: (1) נכסי הקיבוץ ממשיכים לצמוח; (2) חברים חדשים שנקלטים הופכים ל"חברים ותיקים" ומוסיפים שנות ותק למכנה; (3) ותיקים שעדיין מתחת לתקרת 40 שנה ממשיכים לצבור — וגם הם מגדילים את המכנה. הוותק <strong>האישי שלך</strong> קפוא על מועד האישור (סעיף 3.9), אך המכנה הקיבוצי גדל.',
+            source: 'סעיף 1.4 + סעיף 3.9' },
+  belowCap: { label: 'ותיקים מתחת לתקרה (%)', type: 'range', min: 0, max: 100, step: 5, def: 60, panel: 2, fmt: '%',
+            tip: 'אחוז הוותיקים שבמועד האישור צברו <strong>פחות מ-40 שנה</strong> — ולכן ממשיכים לצבור שנות ותק בתקופת ההמתנה ומגדילים את המכנה. ותיקים שכבר הגיעו לתקרה — תרומתם למכנה קפואה.',
+            source: 'סעיף 1.4' },
+  accrual:  { label: 'קצב צבירה ממוצע (%)', type: 'range', min: 0, max: 100, step: 5, def: 95, panel: 2, fmt: '%',
+            tip: 'קצב הצבירה בפועל של ותיקים שמתחת לתקרה. פחות מ-100% כי חלקם יגיעו לתקרה באמצע התקופה, או שנות ותקם יחושבו בחלקיות. <strong>חברים חדשים</strong> תמיד צוברים ב-100%.',
+            source: 'סעיף 1.4 + נספח 1' },
+  // Panel 3: Rules
+  cap:    { label: 'תקרת שנות ותק', type: 'range', min: 20, max: 60, step: 5, def: 40, panel: 3,
+            tip: 'תקרת הוותק לחבר. <strong>40 שנה</strong> בתקנון המוצע. הזז את הסליידר כדי לבדוק מה היה קורה עם תקרה אחרת.',
+            source: 'סעיף 1.4 + סעיף 6 לשינוי' },
+  split:  { label: 'חלק הוותק (% מהשווי)', type: 'range', min: 0, max: 100, step: 5, def: 80, panel: 3, fmt: '%',
+            tip: 'בתקנון המוצע: <strong>80%</strong> מהשווי מחולק לפי ותק, ו-20% בחלוקה שוויונית. ניתן לשנות כאן כדי לראות איך זה משפיע על תרחישי ותק שונים.',
+            source: 'סעיף 3.10.1 + 3.10.2' },
+  borph:  { label: 'זכאות בגין יתמות (שנים להורה)', type: 'range', min: 0, max: 20, step: 1, def: 10, panel: 3,
+            tip: 'התקנון המוצע: <strong>10 שנים</strong> לכל הורה שנפטר. סך מקסימלי 20 שנה (משני הורים).',
+            source: 'סעיף 3.9.1' },
+  bwid:   { label: 'זכאות בגין אלמנות (שנים)', type: 'range', min: 0, max: 20, step: 1, def: 10, panel: 3,
+            tip: 'התקנון המוצע: <strong>10 שנים</strong> בגין בן/בת זוג שנפטר/ה (5 לאלמן/ה + 5 לילדים אם קיימים).',
+            source: 'סעיף 3.9.2' },
+  horizon:{ label: 'אופק תשלומים (שנים)', type: 'range', min: 15, max: 40, step: 5, def: 30, panel: 3,
+            tip: 'מספר השנים המקסימלי לפירעון הזכויות. <strong>30 שנה</strong> בתקנון המוצע — לאחר מכן הזכאות מתבטלת (סעיף 4.4.4).',
+            source: 'סעיף 4.4.4' },
+  t1:     { label: 'סף שלב 1 (% מהזכויות)', type: 'range', min: 10, max: 50, step: 5, def: 25, panel: 3, fmt: '%',
+            tip: 'עד שנפרעו <strong>25%</strong> מהזכויות — כל הרווח הולך לחברים הוותיקים והזכאים (סעיף 4.4.1).',
+            source: 'סעיף 4.4.1' },
+  t2:     { label: 'סף שלב 2 (% מהזכויות)', type: 'range', min: 50, max: 90, step: 5, def: 75, panel: 3, fmt: '%',
+            tip: 'בין <strong>25% ל-75%</strong> מהזכויות — 75% לוותיקים ו-25% בחלוקה שוויונית לכל החברים (סעיף 4.4.2).',
+            source: 'סעיף 4.4.2' },
+  s2:     { label: 'חלק ותיקים בשלב 2 (%)', type: 'range', min: 50, max: 100, step: 5, def: 75, panel: 3, fmt: '%',
+            tip: 'מהסף הראשון עד השני — <strong>75%</strong> מהרווח לוותיקים, היתרה לחלוקה שוויונית.',
+            source: 'סעיף 4.4.2' },
+  s3:     { label: 'חלק ותיקים בשלב 3 (%)', type: 'range', min: 30, max: 100, step: 5, def: 50, panel: 3, fmt: '%',
+            tip: 'מ-<strong>75%</strong> מהזכויות ועד הסיום — חלוקה <strong>חצי-חצי</strong> בין הוותיקים לכלל החברים (סעיף 4.4.3).',
+            source: 'סעיף 4.4.3' }
+};
+
+const PANEL_INFO = {
+  1: { num: '01', title: 'מידע אישי', sub: 'מי אתה — הנתונים שלך' },
+  2: { num: '02', title: 'מציאות הקיבוץ', sub: 'נתוני המשק והקהילה' },
+  3: { num: '03', title: 'כללי התקנון', sub: 'הסעיפים שעומדים להצבעה' }
+};
+
+// ===== State =====
+let mode = 'single';
+let coupleMode = false;
+let activePerson = { A: 1, B: 1 };
+let state = { A: {}, B: {} };
+
+// Initialize defaults
+for (const key in FIELDS) {
+  state.A[key] = FIELDS[key].def;
+  state.B[key] = FIELDS[key].def;
+}
+
+// ===== Formatting =====
+const fmtCurrency = n => {
+  if (n === 0) return '₪0';
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return (n/1e9).toFixed(2).replace(/\.?0+$/,'') + ' מיליארד ₪';
+  if (abs >= 1e6) return (n/1e6).toFixed(2).replace(/\.?0+$/,'') + ' מ׳ ₪';
+  if (abs >= 1e3) return Math.round(n/1e3).toLocaleString('he-IL') + ' אלף ₪';
+  return Math.round(n).toLocaleString('he-IL') + ' ₪';
+};
+
+const fmtField = (key, v) => {
+  const f = FIELDS[key];
+  if (f.type === 'select') {
+    const opt = f.options.find(o => o[0] === v);
+    return opt ? opt[1] : v;
+  }
+  if (f.fmt === 'M') return v.toFixed(1);
+  if (f.fmt === 'K') return Math.round(v);
+  if (f.fmt === 'B') return v.toFixed(2);
+  if (f.fmt === '%') return v.toFixed(1) + '%';
+  return Math.round(v);
+};
+
+// ===== Computation =====
+function compute(s) {
+  // A: Seniority
+  const cap = parseFloat(s.cap);
+  const baseSen = Math.min(parseFloat(s.sen), cap);
+  const orphans = parseInt(s.orph);
+  const sibs = parseFloat(s.sib);
+  const orphBonus = (orphans * parseFloat(s.borph)) / sibs;
+  const isWidow = s.wid === 'yes';
+  const kids = parseFloat(s.kids);
+  let widBonus = 0;
+  if (isWidow) {
+    widBonus = kids > 0 ? parseFloat(s.bwid) / 2 : parseFloat(s.bwid);
+  }
+  const totalSen = baseSen + orphBonus + widBonus;
+
+  // Person 2 seniority (couple mode)
+  let totalSen2 = 0;
+  if (coupleMode) {
+    const baseSen2 = Math.min(parseFloat(s.sen2 || 0), cap);
+    const orphans2 = parseInt(s.orph2 || 0);
+    const sibs2 = Math.max(1, parseFloat(s.sib2 || 1));
+    const orphBonus2 = (orphans2 * parseFloat(s.borph)) / sibs2;
+    totalSen2 = baseSen2 + orphBonus2;
+  }
+
+  // B: Gross right — with waiting period effect
+  const netAssetsAtAdoption = parseFloat(s.assets) * 1e6;
+  const vetsBase = parseFloat(s.vets);
+  const poolBase = parseFloat(s.pool);
+  const senPct = parseFloat(s.split) / 100;
+  const eqPct = 1 - senPct;
+
+  const delay = parseFloat(s.delay) || 0;
+  const growth = parseFloat(s.growth) / 100;
+  const belowCap = parseFloat(s.belowCap) / 100;
+  const accrual = parseFloat(s.accrual) / 100;
+  const newPerYear = parseFloat(s.newm);
+
+  // Effect 1: assets compound during waiting period
+  const netAssets = netAssetsAtAdoption * Math.pow(1 + growth, delay);
+
+  // Effect 2: new members joining during the wait become veterans
+  const newMembersFromDelay = Math.round(newPerYear * delay);
+  const newMemberYearsFromDelay = newPerYear * delay * (delay - 1) / 2;
+
+  // Effect 3: existing veterans below the cap accrue more seniority
+  const veteranYearsFromDelay = vetsBase * belowCap * delay * accrual;
+
+  const pool = poolBase + newMemberYearsFromDelay + veteranYearsFromDelay;
+  const vets = vetsBase + newMembersFromDelay;
+  const poolGrowth = newMemberYearsFromDelay + veteranYearsFromDelay;
+
+  const valPerYearBase = poolBase > 0 ? (netAssetsAtAdoption * senPct) / poolBase : 0;
+  const valPerYear = pool > 0 ? (netAssets * senPct) / pool : 0;
+  const valErosionPct = valPerYearBase > 0 ? ((valPerYear - valPerYearBase) / valPerYearBase) * 100 : 0;
+
+  const equalShare = vets > 0 ? (netAssets * eqPct) / vets * (coupleMode ? 2 : 1) : 0;
+  const senPortion = (totalSen + totalSen2) * valPerYear;
+  const grossRight = senPortion + equalShare;
+
+  // C: Personal adjustments
+  const credits = parseFloat(s.cred) * 1000;
+  const debts = parseFloat(s.debt) * 1000;
+
+  // D: Housing
+  const housingGap = (parseFloat(s.std) - parseFloat(s.home)) * 1e6;
+
+  const adjustedRight = grossRight + credits - debts + housingGap;
+
+  // Delay impact baseline (what values would be without the waiting period)
+  const equalShare_base = vetsBase > 0 ? (netAssetsAtAdoption * eqPct) / vetsBase * (coupleMode ? 2 : 1) : 0;
+  const grossRight_base = (totalSen + totalSen2) * valPerYearBase + equalShare_base;
+  const adjustedRight_base = grossRight_base + credits - debts + housingGap;
+  const senYearDelta = valPerYear - valPerYearBase;
+  const adjustedDelta = adjustedRight - adjustedRight_base;
+  const adjustedDeltaPct = adjustedRight_base !== 0 ? (adjustedDelta / Math.abs(adjustedRight_base)) * 100 : 0;
+
+  // E: Year-by-year payout
+  const horizon = parseFloat(s.horizon);
+  const annualProfit = parseFloat(s.profit) * 1e6;
+  const deficit = parseFloat(s.deficit) * 1e6;
+  const t1 = parseFloat(s.t1) / 100;
+  const t2 = parseFloat(s.t2) / 100;
+  const sh2 = parseFloat(s.s2) / 100;
+  const sh3 = parseFloat(s.s3) / 100;
+
+  const totalVeteranClaim = Math.max(netAssets, 1);
+  const memberFraction = adjustedRight / totalVeteranClaim;
+
+  let cumulativePaid = 0;
+  const yearlyData = [];
+  let phase1EndYear = null, phase2EndYear = null;
+  let inPhase1 = true, inPhase2 = false;
+
+  for (let year = 1; year <= horizon; year++) {
+    const profitThisYear = annualProfit;
+    const distributable = Math.max(0, profitThisYear - deficit);
+
+    const ratio = cumulativePaid / totalVeteranClaim;
+    let vetShare;
+    if (ratio < t1) vetShare = 1.0;
+    else if (ratio < t2) vetShare = sh2;
+    else vetShare = sh3;
+
+    if (inPhase1 && ratio >= t1) { phase1EndYear = year - 1; inPhase1 = false; inPhase2 = true; }
+    if (inPhase2 && ratio >= t2) { phase2EndYear = year - 1; inPhase2 = false; }
+
+    const toVeterans = distributable * vetShare;
+    const toEqual = distributable * (1 - vetShare);
+
+    const memberVet = toVeterans * memberFraction;
+    const currentMembers = vets + newPerYear * year;
+    const memberEqual = toEqual / currentMembers;
+    const yearReceipt = memberVet + memberEqual;
+
+    cumulativePaid += distributable;
+
+    yearlyData.push({ year, receipt: yearReceipt, cumPct: cumulativePaid / totalVeteranClaim * 100 });
+
+    if (cumulativePaid >= totalVeteranClaim) break;
+  }
+
+  // Pad to full horizon with zero entries
+  while (yearlyData.length < horizon) {
+    const year = yearlyData.length + 1;
+    yearlyData.push({ year, receipt: 0, cumPct: 100 });
+  }
+
+  return {
+    totalSen, totalSen2, baseSen, orphBonus, widBonus,
+    valPerYear, valPerYearBase, valErosionPct, equalShare, senPortion,
+    grossRight, adjustedRight, housingGap,
+    yearlyData, phase1EndYear, phase2EndYear,
+    delay, newMembersFromDelay, newMemberYearsFromDelay,
+    veteranYearsFromDelay, poolGrowth,
+    netAssetsAtAdoption, netAssets,
+    poolBase, pool, vetsBase, vets,
+    adjustedRight_base, senYearDelta, adjustedDelta, adjustedDeltaPct
+  };
+}
+
+// ===== UI rendering =====
+const $ = id => document.getElementById(id);
+
+function renderResults() {
+  const resA = compute(state.A);
+  const strip = $('results-strip');
+
+  if (mode === 'single') {
+    strip.classList.remove('compare-mode');
+    strip.innerHTML = `
+      <div class="scenario-block" style="border:none;">
+        <div class="result-grid">
+          <div class="result-item">
+            <span class="result-label">זכאות ברוטו</span>
+            <span class="result-value">${fmtCurrency(resA.grossRight)}</span>
+            <span class="result-sub">לפני התאמות אישיות</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">זכאות מתואמת</span>
+            <span class="result-value highlight">${fmtCurrency(resA.adjustedRight)}</span>
+            <span class="result-sub">כולל חוב/זכות + דיור</span>
+          </div>
+          ${resA.delay > 0 ? `<div class="result-item">
+            <span class="result-label">השפעת ההמתנה — שנת ותק</span>
+            <span class="result-value" style="color:${resA.senYearDelta >= 0 ? 'var(--accent-a)' : 'var(--accent-b)'}">${resA.senYearDelta >= 0 ? '+' : ''}${fmtCurrency(resA.senYearDelta)}</span>
+            <span class="result-sub">${resA.valErosionPct >= 0 ? '+' : ''}${resA.valErosionPct.toFixed(1)}% לשנת ותק</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">השפעת ההמתנה — זכאות מתואמת</span>
+            <span class="result-value" style="color:${resA.adjustedDelta >= 0 ? 'var(--accent-a)' : 'var(--accent-b)'}">${resA.adjustedDelta >= 0 ? '+' : ''}${fmtCurrency(resA.adjustedDelta)}</span>
+            <span class="result-sub">${resA.adjustedDeltaPct >= 0 ? '+' : ''}${resA.adjustedDeltaPct.toFixed(1)}% מהזכאות</span>
+          </div>` : ''}
+        </div>
+      </div>
+    `;
+  } else {
+    const resB = compute(state.B);
+    const delta = resB.adjustedRight - resA.adjustedRight;
+    const deltaClass = delta >= 0 ? 'positive' : 'negative';
+    const deltaSign = delta >= 0 ? '+' : '−';
+
+    strip.classList.add('compare-mode');
+    strip.innerHTML = `
+      <div class="scenario-block">
+        <span class="scenario-tag tag-a">תרחיש א׳</span>
+        <div class="result-grid">
+          <div class="result-item">
+            <span class="result-label">זכאות ברוטו</span>
+            <span class="result-value">${fmtCurrency(resA.grossRight)}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">זכאות מתואמת</span>
+            <span class="result-value highlight">${fmtCurrency(resA.adjustedRight)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="scenario-block">
+        <span class="scenario-tag tag-b">תרחיש ב׳</span>
+        <div class="result-grid">
+          <div class="result-item">
+            <span class="result-label">זכאות ברוטו</span>
+            <span class="result-value">${fmtCurrency(resB.grossRight)}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">זכאות מתואמת</span>
+            <span class="result-value highlight">${fmtCurrency(resB.adjustedRight)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="scenario-block" style="background: var(--bg);">
+        <span class="scenario-tag tag-delta">הפרש</span>
+        <div class="result-item">
+          <span class="result-label">ב׳ פחות א׳</span>
+          <span class="result-value delta-value ${deltaClass}">${deltaSign}${fmtCurrency(Math.abs(delta))}</span>
+          <span class="result-sub">זכאות מתואמת</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const resB = mode === 'compare' ? compute(state.B) : null;
+  renderBreakdown(resA, resB);
+  renderChart(resA, resB);
+}
+
+function renderBreakdown(resA, resB) {
+  const t = $('breakdown-text');
+
+  const buildSection = (r, s) => {
+    const cap        = parseFloat(s.cap);
+    const senRaw     = parseFloat(s.sen);
+    const orphans    = parseInt(s.orph);
+    const sibs       = parseFloat(s.sib);
+    const isWidow    = s.wid === 'yes';
+    const kids       = parseFloat(s.kids);
+    const senPct     = parseFloat(s.split);
+    const eqPct      = 100 - senPct;
+    const pool       = Math.round(r.pool);
+    const vets       = Math.round(r.vets);
+    const credits    = parseFloat(s.cred) * 1000;
+    const debts      = parseFloat(s.debt) * 1000;
+    const stdVal     = parseFloat(s.std);
+    const homeVal    = parseFloat(s.home);
+    const netAssets  = r.netAssets;
+    const totalSenCombined = r.totalSen + r.totalSen2;
+
+    // --- Section א: Seniority ---
+    let senLines = `<div>בסיס: <code>min(${senRaw}, ${cap}) = ${r.baseSen.toFixed(0)} שנים</code></div>`;
+    if (orphans > 0) {
+      senLines += `<div>יתמות: <code>${orphans} × ${parseFloat(s.borph)} ÷ ${sibs} = ${r.orphBonus.toFixed(1)} שנים</code></div>`;
+    }
+    if (isWidow) {
+      const widF = kids > 0 ? `${parseFloat(s.bwid)} ÷ 2` : `${parseFloat(s.bwid)}`;
+      senLines += `<div>אלמנות: <code>${widF} = ${r.widBonus.toFixed(1)} שנים</code></div>`;
+    }
+    if (coupleMode) {
+      const baseSen2   = Math.min(parseFloat(s.sen2 || 0), cap);
+      const orphans2   = parseInt(s.orph2 || 0);
+      const sibs2      = Math.max(1, parseFloat(s.sib2 || 1));
+      const orphBonus2 = (orphans2 * parseFloat(s.borph)) / sibs2;
+      const p2detail   = orphans2 > 0 ? ` + יתמות ${orphBonus2.toFixed(1)}` : '';
+      senLines += `<div>חבר 2: <code>min(${parseFloat(s.sen2 || 0)}, ${cap})${p2detail} = ${r.totalSen2.toFixed(1)} שנים</code></div>`;
+    }
+
+    // --- Section ב: Gross right ---
+    const vpyF  = `${fmtCurrency(netAssets)} × ${senPct}% ÷ ${pool.toLocaleString('he-IL')}`;
+    const spF   = `${totalSenCombined.toFixed(1)} × ${fmtCurrency(r.valPerYear)}`;
+    const eqF   = `${fmtCurrency(netAssets)} × ${eqPct}% ÷ ${vets}${coupleMode ? ' × 2' : ''}`;
+
+    // --- Section ג: Adjustments ---
+    const housingF = `(${stdVal.toFixed(1)} − ${homeVal.toFixed(1)}) × 1,000,000`;
+    const adjF     = `${fmtCurrency(r.grossRight)} + ${fmtCurrency(credits)} − ${fmtCurrency(debts)} + ${fmtCurrency(r.housingGap)}`;
+
+    return `<div class="bd-grid">
+      <div class="bd-section">
+        <div class="bd-step">א</div>
+        <div class="bd-content">
+          <div class="bd-title">ותק</div>
+          <div class="bd-calc">${senLines}</div>
+          <div class="bd-result">סה"כ ותק: <strong>${totalSenCombined.toFixed(1)} שנים</strong></div>
+        </div>
+      </div>
+      <div class="bd-section">
+        <div class="bd-step">ב</div>
+        <div class="bd-content">
+          <div class="bd-title">זכאות ברוטו</div>
+          <div class="bd-calc">
+            <div>ערך שנת ותק: <code>${vpyF}</code> = ${fmtCurrency(r.valPerYear)}</div>
+            <div>חלק ותק: <code>${spF}</code> = ${fmtCurrency(r.senPortion)}</div>
+            <div>חלק שוויוני: <code>${eqF}</code> = ${fmtCurrency(r.equalShare)}</div>
+          </div>
+          <div class="bd-result">ברוטו = <strong>${fmtCurrency(r.grossRight)}</strong></div>
+        </div>
+      </div>
+      ${r.delay > 0 ? `<div style="margin: 8px 0; padding: 10px 12px; background: var(--accent-a-soft); border-right: 3px solid var(--accent-a); border-radius: 0 3px 3px 0; font-size: 12px; color: var(--ink-soft); line-height: 1.7;">
+        <div style="font-weight: 500; color: var(--ink); margin-bottom: 6px;">השפעת תקופת ההמתנה (${r.delay} שנים)</div>
+        <div>נכסים ביום האישור: <code>${fmtCurrency(r.netAssetsAtAdoption)}</code> — ביום ההפעלה: <code>${fmtCurrency(r.netAssets)}</code></div>
+        <div>צמיחת מכנה: <code>+${Math.round(r.poolGrowth).toLocaleString('he-IL')} שנות ותק</code> — חברים חדשים: <code>${Math.round(r.newMemberYearsFromDelay).toLocaleString('he-IL')}</code> + ותיקים: <code>${Math.round(r.veteranYearsFromDelay).toLocaleString('he-IL')}</code></div>
+        <div>חברים חדשים שהפכו לוותיקים: <code>${r.newMembersFromDelay}</code></div>
+        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(91,107,79,0.3);">
+          <div>השפעת תקופת ההמתנה על שווי שנת ותק: <code>${fmtCurrency(r.valPerYearBase)}</code> → <code>${fmtCurrency(r.valPerYear)}</code> <strong style="color:${r.senYearDelta >= 0 ? 'var(--accent-a)' : 'var(--accent-b)'};">(${r.senYearDelta >= 0 ? '+' : ''}${fmtCurrency(r.senYearDelta)} / ${r.valErosionPct >= 0 ? '+' : ''}${r.valErosionPct.toFixed(1)}%)</strong></div>
+          <div style="margin-top:3px;">השפעת תקופת ההמתנה על שווי הזכאות המתואמת: <code>${fmtCurrency(r.adjustedRight_base)}</code> → <code>${fmtCurrency(r.adjustedRight)}</code> <strong style="color:${r.adjustedDelta >= 0 ? 'var(--accent-a)' : 'var(--accent-b)'};">(${r.adjustedDelta >= 0 ? '+' : ''}${fmtCurrency(r.adjustedDelta)} / ${r.adjustedDeltaPct >= 0 ? '+' : ''}${r.adjustedDeltaPct.toFixed(1)}%)</strong></div>
+        </div>
+      </div>` : ''}
+      <div class="bd-section">
+        <div class="bd-step">ג</div>
+        <div class="bd-content">
+          <div class="bd-title">התאמות אישיות</div>
+          <div class="bd-calc">
+            <div>איזון דיור: <code>${housingF}</code> = ${fmtCurrency(r.housingGap)}</div>
+            <div>ברוטו + זכויות − חובות + דיור: <code>${adjF}</code></div>
+          </div>
+          <div class="bd-result">זכאות מתואמת = <strong>${fmtCurrency(r.adjustedRight)}</strong></div>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  const wasOpen = t.querySelector('details')?.open || false;
+
+  let inner;
+  if (mode === 'single') {
+    inner = buildSection(resA, state.A);
+  } else {
+    inner =
+      `<div style="margin-bottom:6px;"><span class="label-a">תרחיש א׳</span></div>` +
+      buildSection(resA, state.A) +
+      `<hr style="border:none;border-top:1px dashed var(--line);margin:14px 0;">` +
+      `<div style="margin-bottom:6px;"><span class="label-b">תרחיש ב׳</span></div>` +
+      buildSection(resB, state.B);
+  }
+
+  t.innerHTML = `<details class="bd-details"${wasOpen ? ' open' : ''}>
+    <summary class="bd-summary"><span class="bd-chevron">&#9654;</span> פירוט החישוב</summary>
+    <div class="bd-details-body">${inner}</div>
+  </details>`;
+}
+
+let chart = null;
+
+// Inline Chart.js annotation plugin (no CDN needed)
+const phaseAnnotationPlugin = {
+  id: 'phaseLines',
+  afterDraw(chartInst, args, opts) {
+    if (!opts || !opts.lines || !opts.lines.length) return;
+    const { ctx, chartArea, scales } = chartInst;
+    ctx.save();
+    opts.lines.forEach(line => {
+      if (line.xIndex == null) return;
+      const x = scales.x.getPixelForValue(line.xIndex);
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.strokeStyle = line.color || 'rgba(80,80,80,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Label
+      ctx.font = '11px Heebo, sans-serif';
+      ctx.fillStyle = line.color || 'rgba(80,80,80,0.9)';
+      ctx.textAlign = 'center';
+      ctx.fillText(line.label, x, chartArea.top + 12);
+    });
+    ctx.restore();
+  }
+};
+if (!Chart.registry.plugins.get('phaseLines')) Chart.register(phaseAnnotationPlugin);
+
+function renderChart(resA, resB) {
+  const dataA = resA.yearlyData;
+  const dataB = resB ? resB.yearlyData : null;
+  const ctx = $('chart').getContext('2d');
+  const maxYear = Math.max(dataA.length, dataB ? dataB.length : 0);
+  const labels = Array.from({length: maxYear}, (_, i) => 'שנה ' + (i+1));
+
+  const datasets = [
+    {
+      label: mode === 'compare' ? 'תקבול שנתי — א׳' : 'תקבול שנתי',
+      data: dataA.map(d => Math.round(d.receipt)),
+      backgroundColor: 'rgba(91, 107, 79, 0.75)',
+      borderColor: 'rgba(91, 107, 79, 1)',
+      borderWidth: 0,
+      yAxisID: 'y'
+    },
+    {
+      label: mode === 'compare' ? '% נפרע — א׳' : '% מצטבר נפרע',
+      data: dataA.map(d => Math.round(d.cumPct)),
+      type: 'line',
+      borderColor: 'rgba(168, 132, 58, 1)',
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.3,
+      yAxisID: 'y1'
+    }
+  ];
+
+  if (mode === 'compare' && dataB) {
+    datasets.push({
+      label: 'תקבול שנתי — ב׳',
+      data: dataB.map(d => Math.round(d.receipt)),
+      backgroundColor: 'rgba(139, 58, 46, 0.75)',
+      borderColor: 'rgba(139, 58, 46, 1)',
+      borderWidth: 0,
+      yAxisID: 'y'
+    });
+    datasets.push({
+      label: '% נפרע — ב׳',
+      data: dataB.map(d => Math.round(d.cumPct)),
+      type: 'line',
+      borderColor: 'rgba(139, 58, 46, 1)',
+      borderDash: [5, 3],
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.3,
+      yAxisID: 'y1'
+    });
+  }
+
+  // Build phase transition lines for scenario A (and B in compare mode)
+  const phaseLines = [];
+  if (resA.phase1EndYear) phaseLines.push({ xIndex: resA.phase1EndYear, label: 'א→ב', color: 'rgba(91,107,79,0.8)' });
+  if (resA.phase2EndYear) phaseLines.push({ xIndex: resA.phase2EndYear, label: 'ב→ג', color: 'rgba(91,107,79,0.8)' });
+  if (resB) {
+    if (resB.phase1EndYear && resB.phase1EndYear !== resA.phase1EndYear)
+      phaseLines.push({ xIndex: resB.phase1EndYear, label: 'א→ב (ב׳)', color: 'rgba(139,58,46,0.8)' });
+    if (resB.phase2EndYear && resB.phase2EndYear !== resA.phase2EndYear)
+      phaseLines.push({ xIndex: resB.phase2EndYear, label: 'ב→ג (ב׳)', color: 'rgba(139,58,46,0.8)' });
+  }
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: { font: { family: 'Heebo', size: 11 }, color: '#4a4a4a', boxWidth: 12, padding: 12 }
+        },
+        tooltip: { rtl: true, textDirection: 'rtl' },
+        phaseLines: { lines: phaseLines }
+      },
+      scales: {
+        x: {
+          ticks: { font: { family: 'Heebo', size: 10 }, color: '#7a7a73', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+          grid: { display: false }
+        },
+        y: {
+          position: 'right',
+          ticks: {
+            font: { family: 'Heebo', size: 10 },
+            color: '#7a7a73',
+            callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'מ׳' : (v/1000).toFixed(0)+'K'
+          },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        },
+        y1: {
+          position: 'left',
+          min: 0, max: 100,
+          ticks: { font: { family: 'Heebo', size: 10 }, color: '#a8843a', callback: v => v + '%' },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+// ===== Panel rendering =====
+function renderPanels() {
+  const panels = $('panels');
+  panels.className = 'panels' + (mode === 'compare' ? ' compare-mode' : '');
+
+  let html = '';
+  for (let panelNum = 1; panelNum <= 3; panelNum++) {
+    const info = PANEL_INFO[panelNum];
+    const allFields = Object.entries(FIELDS).filter(([k,f]) => f.panel === panelNum);
+    const isRulesPanel = panelNum === 3;
+
+    const headerExtra = panelNum === 1
+      ? `<button class="couple-toggle${coupleMode ? ' active' : ''}" id="couple-btn">${coupleMode ? '✓ זוג' : '+ זוג'}</button>`
+      : '';
+
+    html += `
+      <div class="panel ${isRulesPanel ? 'panel-rules' : ''}">
+        <div class="panel-header">
+          <div class="panel-num">${info.num}</div>
+          <div><div class="panel-title">${info.title}</div></div>
+          <div class="panel-subtitle">${info.sub}</div>
+          ${headerExtra}
+        </div>
+        <div class="panel-body ${mode === 'compare' ? 'compare-grid' : ''}">
+    `;
+
+    if (panelNum === 1) {
+      const p1 = allFields.filter(([,f]) => f.person === 1);
+      const p2 = allFields.filter(([,f]) => f.person === 2);
+      const shared = allFields.filter(([,f]) => !f.person);
+
+      if (mode === 'single') {
+        if (coupleMode) {
+          html += `<div class="person-tabs">
+            <button class="person-tab${activePerson.A === 1 ? ' active' : ''}" data-person="1">חבר 1</button>
+            <button class="person-tab${activePerson.A === 2 ? ' active' : ''}" data-person="2">חבר 2</button>
+          </div>
+          <div class="person-section${activePerson.A === 1 ? ' active' : ''}" data-ps="1">`;
+          p1.forEach(([k,f]) => { html += renderField(k, f, 'A'); });
+          html += `</div><div class="person-section${activePerson.A === 2 ? ' active' : ''}" data-ps="2">`;
+          p2.forEach(([k,f]) => { html += renderField(k, f, 'A'); });
+          html += `</div>`;
+        } else {
+          p1.forEach(([k,f]) => { html += renderField(k, f, 'A'); });
+        }
+        if (shared.length) {
+          html += `<div style="border-top:1px dashed var(--line);margin:8px 0;"></div>`;
+          shared.forEach(([k,f]) => { html += renderField(k, f, 'A'); });
+        }
+      } else {
+        html += `<div class="compare-header">
+          <span style="color:var(--accent-a);">תרחיש א׳</span>
+          <span style="color:var(--accent-b);">תרחיש ב׳</span>
+        </div>`;
+        if (coupleMode) html += `<div class="person-label" style="grid-column:1/-1">חבר 1</div>`;
+        p1.forEach(([k,f]) => { html += renderField(k, f, 'A'); html += renderField(k, f, 'B'); });
+        if (coupleMode) {
+          html += `<div class="person-label" style="grid-column:1/-1">חבר 2</div>`;
+          p2.forEach(([k,f]) => { html += renderField(k, f, 'A'); html += renderField(k, f, 'B'); });
+        }
+        if (shared.length) {
+          html += `<div style="grid-column:1/-1;border-top:1px dashed var(--line);margin:4px 0;"></div>`;
+          shared.forEach(([k,f]) => { html += renderField(k, f, 'A'); html += renderField(k, f, 'B'); });
+        }
+      }
+    } else {
+      if (mode === 'compare') {
+        html += `<div class="compare-header">
+          <span style="color:var(--accent-a);">תרחיש א׳</span>
+          <span style="color:var(--accent-b);">תרחיש ב׳</span>
+        </div>`;
+      }
+      for (const [key, field] of allFields) {
+        if (mode === 'single') {
+          html += renderField(key, field, 'A');
+        } else {
+          html += renderField(key, field, 'A');
+          html += renderField(key, field, 'B');
+        }
+      }
+    }
+
+    html += '</div></div>';
+  }
+
+  panels.innerHTML = html;
+
+  // Wire up field inputs
+  panels.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', onFieldChange);
+    el.addEventListener('change', onFieldChange);
+  });
+  panels.querySelectorAll('.info-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById(btn.dataset.tooltip);
+      if (el) el.classList.toggle('open');
+    });
+  });
+
+  // Couple toggle
+  const coupleBtn = document.getElementById('couple-btn');
+  if (coupleBtn) {
+    coupleBtn.addEventListener('click', () => {
+      coupleMode = !coupleMode;
+      if (!coupleMode) activePerson = { A: 1, B: 1 };
+      renderPanels();
+      renderResults();
+    });
+  }
+
+  // Person tab switching (no re-render needed)
+  panels.querySelectorAll('.person-tab').forEach(tab => {
+    tab.addEventListener('click', e => {
+      const person = parseInt(e.target.dataset.person);
+      activePerson.A = person;
+      panels.querySelectorAll('.person-tab').forEach(t =>
+        t.classList.toggle('active', parseInt(t.dataset.person) === person));
+      panels.querySelectorAll('[data-ps]').forEach(sec =>
+        sec.classList.toggle('active', parseInt(sec.dataset.ps) === person));
+    });
+  });
+}
+
+function renderField(key, field, scenario) {
+  const value = state[scenario][key];
+  const displayVal = fmtField(key, value);
+  const fieldId = `f-${scenario}-${key}`;
+  const tooltipId = `t-${scenario}-${key}`;
+
+  let inputHtml = '';
+  if (field.type === 'select') {
+    inputHtml = `<select id="${fieldId}" data-key="${key}" data-scenario="${scenario}">
+      ${field.options.map(opt => `<option value="${opt[0]}" ${opt[0]===value?'selected':''}>${opt[1]}</option>`).join('')}
+    </select>`;
+  } else {
+    inputHtml = `<input type="range" id="${fieldId}" data-key="${key}" data-scenario="${scenario}"
+      min="${field.min}" max="${field.max}" step="${field.step}" value="${value}">`;
+  }
+
+  return `
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">${field.label}</span>
+        <button class="info-btn" data-tooltip="${tooltipId}" aria-label="הסבר">?</button>
+        <span class="field-value" id="v-${scenario}-${key}">${displayVal}</span>
+      </div>
+      ${inputHtml}
+      <div class="field-tooltip" id="${tooltipId}">
+        ${field.tip}
+        <span class="source">מקור: ${field.source}</span>
+      </div>
+    </div>
+  `;
+}
+
+function onFieldChange(e) {
+  const key = e.target.dataset.key;
+  const scenario = e.target.dataset.scenario;
+  const val = e.target.type === 'range' ? parseFloat(e.target.value) : e.target.value;
+  state[scenario][key] = val;
+  const vEl = document.getElementById(`v-${scenario}-${key}`);
+  if (vEl) vEl.textContent = fmtField(key, val);
+  renderResults();
+}
+
+// ===== Mode toggle =====
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    activePerson = { A: 1, B: 1 };
+    if (mode === 'compare') {
+      state.B = { ...state.A };
+    }
+    renderPanels();
+    renderResults();
+  });
+});
+
+// ===== Initial render =====
+renderPanels();
+renderResults();
+
+})();
+</script>
+</body>
+</html>
