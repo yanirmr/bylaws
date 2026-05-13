@@ -1224,6 +1224,8 @@ function renderCashflowExplanation(resA, resB) {
   const el = $('cashflow-explain');
   if (!el) return;
 
+  const fmtNum = n => Math.round(n).toLocaleString('he-IL') + ' ₪';
+
   const buildExplanation = (r, s, label) => {
     const annualProfit = parseFloat(s.profit) * 1e6;
     const deficit = parseFloat(s.deficit) * 1e6;
@@ -1281,9 +1283,9 @@ function renderCashflowExplanation(resA, resB) {
       <div class="cf-phase-body">
         <div class="cf-phase-title">${p1Years} — 100% לוותיקים</div>
         <div class="cf-phase-calc">
-          <div>הניתן לחלוקה: <code>${fmtCurrency(annualProfit)} − ${fmtCurrency(deficit)} = ${fmtCurrency(distributable)}</code></div>
-          <div>חלקך: <code>${fmtCurrency(distributable)} × 100% × ${(memberFraction * 100).toFixed(2)}% = ${fmtCurrency(memberReceiptP1)}</code></div>
-          <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtCurrency(avgReceipt(receiptsP1))}</strong>${p1end ? ` (שלב זה מסתיים כשנפרע ${Math.round(t1*100)}% מהזכאות)` : ''}</div>
+          <div>הניתן לחלוקה: <code>${fmtNum(annualProfit)} − ${fmtNum(deficit)} = ${fmtNum(distributable)}</code></div>
+          <div>חלקך: <code>${fmtNum(distributable)} × 100% × ${(memberFraction * 100).toFixed(2)}% = ${fmtNum(memberReceiptP1)}</code></div>
+          <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtNum(avgReceipt(receiptsP1))}</strong>${p1end ? ` (שלב זה מסתיים כשנפרע ${Math.round(t1*100)}% מהזכאות)` : ''}</div>
         </div>
       </div>`;
 
@@ -1295,9 +1297,9 @@ function renderCashflowExplanation(resA, resB) {
         <div class="cf-phase-body">
           <div class="cf-phase-title">${p2Years} — ${Math.round(sh2*100)}% לוותיקים, ${Math.round((1-sh2)*100)}% לכלל</div>
           <div class="cf-phase-calc">
-            <div>חלק ותיקים: <code>${fmtCurrency(distributable)} × ${Math.round(sh2*100)}% × ${(memberFraction*100).toFixed(2)}% = ${fmtCurrency(memberReceiptP2_vet)}</code></div>
-            <div>חלק שוויוני: <code>${fmtCurrency(distributable)} × ${Math.round((1-sh2)*100)}% ÷ ~${Math.round(membersAtMidP2)} חברים = ${fmtCurrency(memberReceiptP2_eq)}</code></div>
-            <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtCurrency(avgReceipt(receiptsP2))}</strong>${equalShareGrows ? ` — החלק השוויוני <em>קטן</em> עם הצטרפות חברים חדשים` : ''}${p2end ? ` (שלב זה מסתיים כשנפרע ${Math.round(t2*100)}%)` : ''}</div>
+            <div>חלק ותיקים: <code>${fmtNum(distributable)} × ${Math.round(sh2*100)}% × ${(memberFraction*100).toFixed(2)}% = ${fmtNum(memberReceiptP2_vet)}</code></div>
+            <div>חלק שוויוני: <code>${fmtNum(distributable)} × ${Math.round((1-sh2)*100)}% ÷ ~${Math.round(membersAtMidP2)} חברים = ${fmtNum(memberReceiptP2_eq)}</code></div>
+            <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtNum(avgReceipt(receiptsP2))}</strong>${equalShareGrows ? ` — החלק השוויוני <em>קטן</em> עם הצטרפות חברים חדשים` : ''}${p2end ? ` (שלב זה מסתיים כשנפרע ${Math.round(t2*100)}%)` : ''}</div>
           </div>
         </div>`;
     }
@@ -1310,9 +1312,9 @@ function renderCashflowExplanation(resA, resB) {
         <div class="cf-phase-body">
           <div class="cf-phase-title">${p3Years} — ${Math.round(sh3*100)}% לוותיקים, ${Math.round((1-sh3)*100)}% לכלל</div>
           <div class="cf-phase-calc">
-            <div>חלק ותיקים: <code>${fmtCurrency(distributable)} × ${Math.round(sh3*100)}% × ${(memberFraction*100).toFixed(2)}% = ${fmtCurrency(memberReceiptP3_vet)}</code></div>
-            <div>חלק שוויוני: <code>${fmtCurrency(distributable)} × ${Math.round((1-sh3)*100)}% ÷ ~${Math.round(membersAtMidP3)} חברים = ${fmtCurrency(memberReceiptP3_eq)}</code></div>
-            <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtCurrency(avgReceipt(receiptsP3))}</strong>${equalShareGrows ? ` — החלק השוויוני ממשיך לקטון` : ''}</div>
+            <div>חלק ותיקים: <code>${fmtNum(distributable)} × ${Math.round(sh3*100)}% × ${(memberFraction*100).toFixed(2)}% = ${fmtNum(memberReceiptP3_vet)}</code></div>
+            <div>חלק שוויוני: <code>${fmtNum(distributable)} × ${Math.round((1-sh3)*100)}% ÷ ~${Math.round(membersAtMidP3)} חברים = ${fmtNum(memberReceiptP3_eq)}</code></div>
+            <div>תקבול שנתי אופייני: <strong style="color:var(--ink)">${fmtNum(avgReceipt(receiptsP3))}</strong>${equalShareGrows ? ` — החלק השוויוני ממשיך לקטון` : ''}</div>
           </div>
         </div>`;
     }
@@ -1327,9 +1329,9 @@ function renderCashflowExplanation(resA, resB) {
 
     const drops = [];
     if (p1end && p2avg < p1avg * 0.95)
-      drops.push(`ירידה חדה בין שלב א׳ לב׳ (מ-${fmtCurrency(p1avg)} ל-${fmtCurrency(p2avg)}) — שיעור הוותיקים יורד מ-100% ל-${Math.round(sh2*100)}%`);
+      drops.push(`ירידה חדה בין שלב א׳ לב׳ (מ-${fmtNum(p1avg)} ל-${fmtNum(p2avg)}) — שיעור הוותיקים יורד מ-100% ל-${Math.round(sh2*100)}%`);
     if (p2end && p3avg < p2avg * 0.95)
-      drops.push(`ירידה נוספת בין שלב ב׳ לג׳ (ל-${fmtCurrency(p3avg)}) — שיעור הוותיקים יורד שוב ל-${Math.round(sh3*100)}%`);
+      drops.push(`ירידה נוספת בין שלב ב׳ לג׳ (ל-${fmtNum(p3avg)}) — שיעור הוותיקים יורד שוב ל-${Math.round(sh3*100)}%`);
     if (equalShareGrows && (receiptsP2.length > 0 || receiptsP3.length > 0))
       drops.push(`בתוך שלבים ב׳ וג׳, התקבול השוויוני יורד בהדרגה ככל שמצטרפים חברים חדשים (${parseFloat(s.newm)} לשנה)`);
 
