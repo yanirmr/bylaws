@@ -737,7 +737,7 @@ const FIELDS = {
   kids:   { label: 'ילדים חברים/זכאים', type: 'range', min: 0, max: 6, step: 1, def: 0, panel: 1, person: 1,
             tip: 'משפיע על חלוקת תוספת הוותק של בן/בת הזוג שנפטר/ה. אם יש ילדים חברים, התוספת מתחלקת חצי-חצי בין האלמן/ה לילדים.',
             source: 'סעיף 3.9.2' },
-  sen2:   { label: 'שנות ותק', type: 'range', min: 0, max: 60, step: 1, def: 30, panel: 1, person: 2,
+  sen2:   { label: 'שנות ותק', type: 'range', min: 0, max: 60, step: 1, def: 20, panel: 1, person: 2,
             tip: 'שנות הוותק של בן/בת הזוג מתחילת המועמדות. מוגבל ל-<strong>40 שנה</strong> (סעיף 1.4).',
             source: 'סעיף 1.4 + נספח 1' },
   orph2:  { label: 'הורים שנפטרו (חברי קיבוץ)', type: 'select', options: [['0','0'],['1','1'],['2','2']], def: '0', panel: 1, person: 2,
@@ -746,27 +746,27 @@ const FIELDS = {
   sib2:   { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 0, max: 6, step: 1, def: 1, panel: 1, person: 2,
             tip: 'מספר האחים החברים של בן/בת הזוג שחולקים את תוספת הוותק.',
             source: 'סעיף 3.9.1' },
-  home:   { label: 'ערך הדירה הנוכחית (מיליון ₪)', type: 'range', min: 0, max: 3, step: 0.1, def: 2, panel: 1, fmt: 'M',
+  home:   { label: 'ערך הדירה הנוכחית (מיליון ₪)', type: 'range', min: 1, max: 6, step: 0.1, def: 4, panel: 1, fmt: 'M',
             tip: 'שווי <strong>"הבלוקים"</strong> של הדירה לפי שמאות שתיערך ביום הקובע — ערך בנייה בפועל בניכוי פחת (סעיף 5.2.1).',
             source: 'סעיף 5.2.1' },
-  std:    { label: 'ערך דירת סטנדרט (מיליון ₪)', type: 'range', min: 0, max: 3, step: 0.1, def: 2, panel: 1, fmt: 'M',
+  std:    { label: 'ערך דירת סטנדרט (מיליון ₪)', type: 'range', min: 1, max: 6, step: 0.1, def: 4, panel: 1, fmt: 'M',
             tip: 'דירת הסטנדרט שהקיבוץ מחויב אליה לבית אב שהשלים <strong>50 שנות ותק</strong> ביום הקובע. ערך הזכות לשנת ותק = ערך הסטנדרט ÷ 50.',
             source: 'סעיף 5.2.2' },
-  debt:   { label: 'חוב אישי לקיבוץ (אלפי ₪)', type: 'range', min: 0, max: 500, step: 10, def: 0, panel: 1, fmt: 'K',
+  debt:   { label: 'חוב אישי לקיבוץ (אלפי ₪)', type: 'range', min: 0, max: 1000, step: 10, def: 0, panel: 1, fmt: 'K',
             tip: 'התחייבויות שלך לקיבוץ — חובות, נכסים שצברת ולא העברת, תשלומי נקלט שלא שולמו וכו\'. <strong>מנוכים</strong> מהזכאות.',
             source: 'סעיף 4.5.2' },
-  cred:   { label: 'זכאויות אישיות (אלפי ₪)', type: 'range', min: 0, max: 500, step: 10, def: 0, panel: 1, fmt: 'K',
+  cred:   { label: 'זכאויות אישיות (אלפי ₪)', type: 'range', min: 0, max: 1000, step: 10, def: 0, panel: 1, fmt: 'K',
             tip: 'יתרות תקציבים לא נוצלו, קרן חיים, וכספים אישיים אחרים. <strong>מוסיפים</strong> לזכאות.',
             source: 'סעיף 4.5.1' },
 
   // Panel 2: Reality
-  assets: { label: 'נכסי הקיבוץ נטו (מיליון ₪)', type: 'range', min: 300, max: 2000, step: 50, def: 750, panel: 2, fmt: 'M',
+  assets: { label: 'נכסי הקיבוץ נטו (לאחר ניכויים, במיליון ₪)', type: 'range', min: 300, max: 2000, step: 50, def: 750, panel: 2, fmt: 'M',
             tip: 'הערכת השווי של נכסי הקיבוץ <strong>בניכוי</strong> ההתחייבויות והפחתות עתידיות (סעיפים 3.1–3.7): קרנות ערבות הדדית, השקעות תשתית, פער קהילה, דיור נקלטים וכו\'.',
             source: 'סעיף 3' },
   vets:   { label: 'מספר חברים ותיקים', type: 'range', min: 100, max: 400, step: 5, def: 340, panel: 2,
             tip: 'סך החברים שיוכרו כ"ותיקים" במועד הקובע — מי שנרשם בספר החברים עד אז (סעיף 1.4 — הגדרת "חבר ותיק").',
             source: 'סעיף 1.4' },
-  pool:   { label: 'סך שנות הוותק בקיבוץ', type: 'range', min: 6000, max: 16000, step: 500, def: 11000, panel: 2,
+  pool:   { label: 'סך שנות הוותק בקיבוץ', type: 'range', min: 6000, max: 16000, step: 500, def: 11000, panel: 2, fmt: ',',
             tip: 'סכום שנות הוותק של כל החברים הוותיקים והזכאים יחד. משמש כמכנה לחלוקת 80% מהזכויות.<br>הערכה: כ-<strong>10,500 שנות ותק</strong> של החברים החיים היום, ועוד כ-<strong>116 חברים שנפטרו</strong> המזכים את יורשיהם ב-116×X שנות ותק נוספות.',
             source: 'סעיף 3.10.1' },
   profit: { label: 'רווח שנתי לחלוקה (מיליון ₪)', type: 'range', min: 10, max: 100, step: 5, def: 50, panel: 2, fmt: 'M',
@@ -776,12 +776,12 @@ const FIELDS = {
             tip: 'הפער בין הוצאות הקהילה למקורותיה — <strong>עד 25%</strong> מהוצאות הקהילה ב-10 השנים הראשונות, ואז 15%, ולבסוף 5% (סעיף 4.3.4).',
             source: 'סעיף 4.3.4' },
   newm:   { label: 'נקלטים חדשים לשנה', type: 'range', min: 0, max: 20, step: 1, def: 10, panel: 2,
-            tip: 'מספר חברים חדשים שיתקבלו לחברות בכל שנה. <strong>משפיע</strong> על חלוקה השוויונית בשלבי הביניים של ההסדר (מ-25% ועד 75%).',
-            source: 'סעיף 4.4' },
+    tip: 'מספר חברים חדשים שיתקבלו לחברות בכל שנה. <strong>משפיע</strong> על מספר החברים הוותיקים בשלב שבין קבלת התקנון להפעלתו; לאחר הפעלת התקנון, משפיע על החלוקה השוויונית בשלבי הביניים של ההסדר (מ-25% ועד 75%).',
+    source: 'סעיף 4.4' },
   growth: { label: 'צמיחת נכסים (% לשנה)', type: 'range', min: 0, max: 8, step: 0.1, def: 1, panel: 2, fmt: '%',
             tip: 'קצב צמיחה שנתי צפוי של הנכסים והרווחים. עדכון שווי כל 5 שנים — רק עליות מעל <strong>30%</strong> מעדכנות את הזכויות (סעיף 3.8).',
             source: 'סעיף 3.8' },
-  delay:    { label: 'פער אישור–הפעלה (שנים)', type: 'range', min: 0, max: 20, step: 1, def: 5, panel: 2,
+            delay:    { label: 'פער אישור–הפעלה (שנים)', type: 'range', min: 0, max: 30, step: 1, def: 5, panel: 2,
             tip: '<strong>מועד קביעת הזכאים</strong> (אישור האסיפה) מול <strong>המועד הקובע</strong> (הפעלת התקנון). בתקופת ההמתנה קורות שלוש תופעות: (1) נכסי הקיבוץ ממשיכים לצמוח; (2) חברים חדשים שנקלטים הופכים ל"חברים ותיקים" ומוסיפים שנות ותק למכנה; (3) ותיקים שעדיין מתחת לתקרת 40 שנה ממשיכים לצבור — וגם הם מגדילים את המכנה. הוותק <strong>האישי שלך</strong> קפוא על מועד האישור (סעיף 3.9), אך המכנה הקיבוצי גדל.',
             source: 'סעיף 1.4 + סעיף 3.9' },
   belowCap: { label: 'ותיקים מתחת לתקרה (%)', type: 'range', min: 0, max: 100, step: 5, def: 60, panel: 2, fmt: '%',
@@ -828,7 +828,7 @@ const PANEL_INFO = {
 
 // ===== State =====
 let mode = 'single';
-let coupleMode = false;
+let coupleMode = true;
 let activePerson = { A: 1, B: 1 };
 let state = { A: {}, B: {} };
 
@@ -1528,7 +1528,7 @@ function renderPanels() {
     const isRulesPanel = panelNum === 3;
 
     const headerExtra = panelNum === 1
-      ? `<button class="couple-toggle${coupleMode ? ' active' : ''}" id="couple-btn">${coupleMode ? '✓ זוג' : '+ זוג'}</button>`
+      ? `<button class="couple-toggle" id="couple-btn">${coupleMode ? 'יחיד' : 'זוג'}</button>`
       : '';
 
     html += `
