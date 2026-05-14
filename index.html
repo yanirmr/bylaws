@@ -202,6 +202,22 @@
     color: var(--ink-muted);
     margin-left: auto;
   }
+  .reset-btn {
+    font-family: 'Heebo', sans-serif;
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--ink-muted);
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover {
+    border-color: var(--accent-b);
+    color: var(--accent-b);
+    background: var(--accent-b-soft);
+  }
 
   /* Results section */
   .results-strip {
@@ -664,6 +680,7 @@
 <div class="mode-bar">
   <button class="mode-btn active" data-mode="single">תרחיש יחיד</button>
   <button class="mode-btn" data-mode="compare">השוואת תרחישים</button>
+  <button class="reset-btn" id="reset-btn">↺ איפוס לברירות מחדל</button>
   <span class="mode-label">לחץ על <strong style="color:var(--gold)">?</strong> ליד כל שדה לפירוט הנוסחה והמקור בתקנון</span>
 </div>
 
@@ -705,13 +722,13 @@
 // ===== Field definitions with tooltips =====
 const FIELDS = {
   // Panel 1: Personal
-  sen:    { label: 'שנות ותק', type: 'range', min: 0, max: 60, step: 1, def: 35, panel: 1, person: 1,
+  sen:    { label: 'שנות ותק', type: 'range', min: 0, max: 60, step: 1, def: 20, panel: 1, person: 1,
             tip: 'שנות הוותק שצברת מתחילת המועמדות. מוגבל בתקנון לעד <strong>40 שנה</strong> (סעיף 1.4 — הגדרת "שנות הוותק"). מחושב לפי <strong>נספח 1 — תקנון ותק</strong>: צבירה מגיל 22, עד גיל 70 או עד המועד הקובע.',
             source: 'סעיף 1.4 + נספח 1' },
   orph:   { label: 'הורים שנפטרו (חברי קיבוץ)', type: 'select', options: [['0','0'],['1','1'],['2','2']], def: '0', panel: 1, person: 1,
             tip: 'מספר הורים שהיו חברי הקיבוץ ונפטרו לפני מועד קביעת הזכאים. כל הורה מזכה ב-<strong>10 שנות ותק נוספות</strong> (לכל היותר 20 שנה).',
             source: 'סעיף 3.9.1' },
-  sib:    { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 1, max: 6, step: 1, def: 1, panel: 1, person: 1,
+  sib:    { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 0, max: 6, step: 1, def: 1, panel: 1, person: 1,
             tip: 'אם יש לך אחים שגם הם חברים ותיקים או זכאים, תוספת הוותק בגין כל הורה <strong>מחולקת בחלקים שווים</strong> ביניכם.',
             source: 'סעיף 3.9.1' },
   wid:    { label: 'בן/בת זוג שנפטר/ה (חבר/ה)', type: 'select', options: [['no','לא'],['yes','כן']], def: 'no', panel: 1, person: 1,
@@ -726,7 +743,7 @@ const FIELDS = {
   orph2:  { label: 'הורים שנפטרו (חברי קיבוץ)', type: 'select', options: [['0','0'],['1','1'],['2','2']], def: '0', panel: 1, person: 2,
             tip: 'הורים של בן/בת הזוג שהיו חברי קיבוץ ונפטרו — כל הורה מזכה ב-<strong>10 שנות ותק נוספות</strong>.',
             source: 'סעיף 3.9.1' },
-  sib2:   { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 1, max: 6, step: 1, def: 1, panel: 1, person: 2,
+  sib2:   { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 0, max: 6, step: 1, def: 1, panel: 1, person: 2,
             tip: 'מספר האחים החברים של בן/בת הזוג שחולקים את תוספת הוותק.',
             source: 'סעיף 3.9.1' },
   home:   { label: 'ערך הדירה הנוכחית (מיליון ₪)', type: 'range', min: 0, max: 3, step: 0.1, def: 2, panel: 1, fmt: 'M',
@@ -750,7 +767,7 @@ const FIELDS = {
             tip: 'סך החברים שיוכרו כ"ותיקים" במועד הקובע — מי שנרשם בספר החברים עד אז (סעיף 1.4 — הגדרת "חבר ותיק").',
             source: 'סעיף 1.4' },
   pool:   { label: 'סך שנות הוותק בקיבוץ', type: 'range', min: 6000, max: 16000, step: 500, def: 11000, panel: 2,
-            tip: 'סכום שנות הוותק של כל החברים הוותיקים והזכאים יחד. משמש כמכנה לחלוקת 80% מהזכויות.',
+            tip: 'סכום שנות הוותק של כל החברים הוותיקים והזכאים יחד. משמש כמכנה לחלוקת 80% מהזכויות.<br>הערכה: כ-<strong>10,500 שנות ותק</strong> של החברים החיים היום, ועוד כ-<strong>116 חברים שנפטרו</strong> המזכים את יורשיהם ב-116×X שנות ותק נוספות.',
             source: 'סעיף 3.10.1' },
   profit: { label: 'רווח שנתי לחלוקה (מיליון ₪)', type: 'range', min: 10, max: 100, step: 5, def: 50, panel: 2, fmt: 'M',
             tip: 'הרווח השנתי הצפוי <strong>לאחר</strong> ניכויי מדרג השימושים (השלמות ערבות, תשתיות, דיור, פער קהילה). זהו הסכום שזמין לפירעון זכויות.',
@@ -1680,6 +1697,11 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     renderPanels();
     renderResults();
   });
+});
+
+// ===== Reset to defaults =====
+document.getElementById('reset-btn').addEventListener('click', () => {
+  location.href = location.pathname;
 });
 
 // ===== Initial render =====
