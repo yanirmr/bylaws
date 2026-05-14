@@ -375,6 +375,7 @@
     border-bottom: 1px dashed var(--line-soft);
   }
   .field-group:last-child { border-bottom: none; }
+  .field-group.field-inactive { opacity: 0.3; pointer-events: none; }
   .field-label-row {
     display: flex;
     align-items: center;
@@ -728,24 +729,24 @@ const FIELDS = {
   orph:   { label: 'הורים שנפטרו (חברי קיבוץ)', type: 'select', options: [['0','0'],['1','1'],['2','2']], def: '0', panel: 1, person: 1,
             tip: 'מספר הורים שהיו חברי הקיבוץ ונפטרו לפני מועד קביעת הזכאים. כל הורה מזכה ב-<strong>10 שנות ותק נוספות</strong> (לכל היותר 20 שנה).',
             source: 'סעיף 3.9.1' },
-  sib:    { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 0, max: 6, step: 1, def: 1, panel: 1, person: 1,
-            tip: 'אם יש לך אחים שגם הם חברים ותיקים או זכאים, תוספת הוותק בגין כל הורה <strong>מחולקת בחלקים שווים</strong> ביניכם.',
-            source: 'סעיף 3.9.1' },
+  sib:    { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 0, max: 6, step: 1, def: 0, panel: 1, person: 1,
+            tip: 'מספר האחים <strong>הנוספים</strong> (מלבדך) שגם הם חברים ותיקים או זכאים. 0 = אתה לבד, מקבל את התוספת במלואה. 1 = אח אחד נוסף, התוספת מתחלקת בין שניכם. וכן הלאה.',
+            source: 'סעיף 3.9.1', dep: { on: 'orph', show: v => v !== '0' } },
   wid:    { label: 'בן/בת זוג שנפטר/ה (חבר/ה)', type: 'select', options: [['no','לא'],['yes','כן']], def: 'no', panel: 1, person: 1,
             tip: 'אם בן/בת הזוג היו חברי קיבוץ במועד פטירתם — תוספת של <strong>10 שנות ותק</strong>. אם יש ילדים חברים: 5 שנים לאלמן/ה ו-5 שנים מחולקות לילדים.',
             source: 'סעיף 3.9.2' },
   kids:   { label: 'ילדים חברים/זכאים', type: 'range', min: 0, max: 6, step: 1, def: 0, panel: 1, person: 1,
             tip: 'משפיע על חלוקת תוספת הוותק של בן/בת הזוג שנפטר/ה. אם יש ילדים חברים, התוספת מתחלקת חצי-חצי בין האלמן/ה לילדים.',
-            source: 'סעיף 3.9.2' },
+            source: 'סעיף 3.9.2', dep: { on: 'wid', show: v => v === 'yes' } },
   sen2:   { label: 'שנות ותק', type: 'range', min: 0, max: 60, step: 1, def: 20, panel: 1, person: 2,
             tip: 'שנות הוותק של בן/בת הזוג מתחילת המועמדות. מוגבל ל-<strong>40 שנה</strong> (סעיף 1.4).',
             source: 'סעיף 1.4 + נספח 1' },
   orph2:  { label: 'הורים שנפטרו (חברי קיבוץ)', type: 'select', options: [['0','0'],['1','1'],['2','2']], def: '0', panel: 1, person: 2,
             tip: 'הורים של בן/בת הזוג שהיו חברי קיבוץ ונפטרו — כל הורה מזכה ב-<strong>10 שנות ותק נוספות</strong>.',
             source: 'סעיף 3.9.1' },
-  sib2:   { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 0, max: 6, step: 1, def: 1, panel: 1, person: 2,
-            tip: 'מספר האחים החברים של בן/בת הזוג שחולקים את תוספת הוותק.',
-            source: 'סעיף 3.9.1' },
+  sib2:   { label: 'אחים חברים שחולקים את הזכאות', type: 'range', min: 0, max: 6, step: 1, def: 0, panel: 1, person: 2,
+            tip: 'מספר האחים <strong>הנוספים</strong> של בן/בת הזוג (מלבדו/ה) שגם הם חברים ותיקים או זכאים. 0 = בן/בת הזוג לבד, מקבל/ת את התוספת במלואה.',
+            source: 'סעיף 3.9.1', dep: { on: 'orph2', show: v => v !== '0' } },
   home:   { label: 'ערך הדירה הנוכחית (מיליון ₪)', type: 'range', min: 1, max: 6, step: 0.1, def: 4, panel: 1, fmt: 'M',
             tip: 'שווי <strong>"הבלוקים"</strong> של הדירה לפי שמאות שתיערך ביום הקובע — ערך בנייה בפועל בניכוי פחת (סעיף 5.2.1).',
             source: 'סעיף 5.2.1' },
@@ -902,7 +903,7 @@ function compute(s) {
   const cap = parseFloat(s.cap);
   const baseSen = Math.min(parseFloat(s.sen), cap);
   const orphans = parseInt(s.orph);
-  const sibs = parseFloat(s.sib);
+  const sibs = parseFloat(s.sib) + 1;
   const orphBonus = (orphans * parseFloat(s.borph)) / sibs;
   const isWidow = s.wid === 'yes';
   const kids = parseFloat(s.kids);
@@ -917,7 +918,7 @@ function compute(s) {
   if (coupleMode) {
     const baseSen2 = Math.min(parseFloat(s.sen2 || 0), cap);
     const orphans2 = parseInt(s.orph2 || 0);
-    const sibs2 = Math.max(1, parseFloat(s.sib2 || 1));
+    const sibs2 = parseFloat(s.sib2 || 0) + 1;
     const orphBonus2 = (orphans2 * parseFloat(s.borph)) / sibs2;
     totalSen2 = baseSen2 + orphBonus2;
   }
@@ -1131,7 +1132,7 @@ function renderBreakdown(resA, resB) {
     const cap        = parseFloat(s.cap);
     const senRaw     = parseFloat(s.sen);
     const orphans    = parseInt(s.orph);
-    const sibs       = parseFloat(s.sib);
+    const sibs       = parseFloat(s.sib) + 1;
     const isWidow    = s.wid === 'yes';
     const kids       = parseFloat(s.kids);
     const senPct     = parseFloat(s.split);
@@ -1148,7 +1149,9 @@ function renderBreakdown(resA, resB) {
     // --- Section א: Seniority ---
     let senLines = `<div>בסיס: <code>min(${senRaw}, ${cap}) = ${r.baseSen.toFixed(0)} שנים</code></div>`;
     if (orphans > 0) {
-      senLines += `<div>יתמות: <code>${orphans} × ${parseFloat(s.borph)} ÷ ${sibs} = ${r.orphBonus.toFixed(1)} שנים</code></div>`;
+      const sibCount = parseFloat(s.sib);
+      const orphDiv = sibCount > 0 ? ` ÷ ${sibs} (${sibCount} אחים + אתה)` : '';
+      senLines += `<div>יתמות: <code>${orphans} × ${parseFloat(s.borph)}${orphDiv} = ${r.orphBonus.toFixed(1)} שנים</code></div>`;
     }
     if (isWidow) {
       const widF = kids > 0 ? `${parseFloat(s.bwid)} ÷ 2` : `${parseFloat(s.bwid)}`;
@@ -1157,7 +1160,7 @@ function renderBreakdown(resA, resB) {
     if (coupleMode) {
       const baseSen2   = Math.min(parseFloat(s.sen2 || 0), cap);
       const orphans2   = parseInt(s.orph2 || 0);
-      const sibs2      = Math.max(1, parseFloat(s.sib2 || 1));
+      const sibs2      = parseFloat(s.sib2 || 0) + 1;
       const orphBonus2 = (orphans2 * parseFloat(s.borph)) / sibs2;
       const p2detail   = orphans2 > 0 ? ` + יתמות ${orphBonus2.toFixed(1)}` : '';
       senLines += `<div>חבר 2: <code>min(${parseFloat(s.sen2 || 0)}, ${cap})${p2detail} = ${r.totalSen2.toFixed(1)} שנים</code></div>`;
@@ -1656,8 +1659,9 @@ function renderField(key, field, scenario) {
       min="${field.min}" max="${field.max}" step="${field.step}" value="${value}">`;
   }
 
+  const isActive = !field.dep || field.dep.show(state[scenario][field.dep.on]);
   return `
-    <div class="field-group">
+    <div class="field-group${isActive ? '' : ' field-inactive'}" id="fg-${scenario}-${key}">
       <div class="field-label-row">
         <span class="field-label">${field.label}</span>
         <button class="info-btn" data-tooltip="${tooltipId}" aria-label="הסבר">?</button>
@@ -1679,6 +1683,12 @@ function onFieldChange(e) {
   state[scenario][key] = val;
   const vEl = document.getElementById(`v-${scenario}-${key}`);
   if (vEl) vEl.textContent = fmtField(key, val);
+  Object.entries(FIELDS).forEach(([depKey, depField]) => {
+    if (depField.dep && depField.dep.on === key) {
+      const fgEl = document.getElementById(`fg-${scenario}-${depKey}`);
+      if (fgEl) fgEl.classList.toggle('field-inactive', !depField.dep.show(val));
+    }
+  });
   saveToURL();
   renderResults();
 }
